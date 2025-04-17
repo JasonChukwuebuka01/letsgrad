@@ -15,13 +15,18 @@ import {
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { FontAwesome5 } from '@expo/vector-icons'; // Using FontAwesome5 for icons
+import * as FileSystem from 'expo-file-system';
 
 export default function UploadScreen() {
 
   const router = useRouter();
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+  const [base64Image, setBase64Image] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+
 
   // Function to handle selecting a photo
   const handleSelectPhoto = async () => {
@@ -50,6 +55,11 @@ export default function UploadScreen() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setSelectedImageUri(result.assets[0].uri);
         console.log('Selected Image URI:', result.assets[0].uri);
+
+        const base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        setBase64Image(base64);
       }
     } catch (e) {
       console.error("ImagePicker Error: ", e);
@@ -57,6 +67,11 @@ export default function UploadScreen() {
       Alert.alert("Error", "Could not select image.");
     }
   };
+
+
+
+
+
 
   // Function to handle triggering the AI generation (placeholder)
   const handleGeneratePhoto = async () => {
@@ -68,41 +83,40 @@ export default function UploadScreen() {
     setError(null);
     setIsLoading(true);
 
-    try {
-      // Call the AI service to generate the photo
-      const transformations = ['e_art:audrey', 'e_cartoonify']; // Artistic effect and cartoonify
-
-      const result = await cloudinaryAIService.applyTransformation(selectedImageUri, transformations);
-      if (result.success) {
-        router.push({
-          pathname: '/result',
-          params: { url: result.url }
-        });
-
-        console.log('Generated Image URL:', result.url);
-      } else {
-        setError(result.error || 'Failed to generate photo. Please try again.');
-        Alert.alert('Error', 'Failed to generate photo. Please try again.');
-      }
-    } catch (error) {
-      console.error('Generation Error:', error);
-      setError('An unexpected error occurred. Please try again.');
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    if (!base64Image) {
+      Alert.alert('Error', 'Please select an image first.');
+      return;
     }
 
+    try {
+      const response = await fetch('http://192.168.43.201:8081/api/transform', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          base64Image,
+          prompt: 'Transform this image into a college graduation photo',
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) {
+        Alert.alert('Error', data.error);
+      } else {
+        setResult(data.result);
+        console.log(data.result);
+      }
+    } catch (error) {
+      console.error('API Error:', error);
+      Alert.alert('Error', 'Failed to connect to the API.');
+    }
 
     setIsLoading(false);
-
-
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
-          <Text style={styles.title}>Create Your Grad Photo</Text>
-
-
           {/* Image Preview Area */}
           <View style={styles.previewContainer}>
             {selectedImageUri ? (
@@ -142,7 +156,6 @@ export default function UploadScreen() {
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
-
         </View>
       </ScrollView>
     </SafeAreaView>

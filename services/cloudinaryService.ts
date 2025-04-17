@@ -1,4 +1,3 @@
-
 type UploadApiResponse = {
     secure_url: string;
     public_id: string;
@@ -28,47 +27,52 @@ class CloudinaryAIService {
     private async uploadToCloudinary(imageUri: string, transformation?: any): Promise<UploadApiResponse> {
         const formData = new FormData();
         
-        // Create file from URI
-       
-        console.log("name", this.cloudName.length);
-        console.log("Api", this.apiKey);
-        console.log("Secret", this.apiSecret);
-
-        const filename = imageUri.split('/').pop() || 'image';
-        const match = /\.(\w+)$/.exec(filename);
-    
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
-        
-        formData.append('file', {
-            uri: imageUri,
-            name: filename,
-            type
-        } as any);
-
-        if (transformation) {
-            formData.append('transformation', JSON.stringify(transformation));
-        }
-
-        formData.append('upload_preset', 'ml_default'); // Create an unsigned upload preset in your Cloudinary dashboard
-        
-        const url = `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`;
-        
         try {
+            // Create file from URI
+            const filename = imageUri.split('/').pop() || 'image';
+            const match = /\.(\w+)$/.exec(filename);
+            const type = match ? `image/${match[1]}` : 'image/jpeg';
+            
+            // Debug the file object being created
+            console.log('Preparing upload for:', { filename, type });
+            
+            formData.append('file', {
+                uri: imageUri,
+                name: filename,
+                type
+            } as any);
+
+            if (transformation) {
+                formData.append('transformation', JSON.stringify(transformation));
+            }
+
+            formData.append('upload_preset', 'ml_default');
+            
+            const url = `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`;
+            
+            console.log('Uploading to:', url);
+            
             const response = await fetch(url, {
                 method: 'POST',
                 body: formData,
                 headers: {
                     'Accept': 'application/json',
-                    'Content-Type': 'multipart/form-data',
+                    // Removing Content-Type header - let fetch set it automatically for FormData
                 },
             });
 
             if (!response.ok) {
-                throw new Error(`Upload failed with status ${response.status}`);
+                const errorText = await response.text();
+                console.error('Upload failed with status:', response.status);
+                console.error('Error details:', errorText);
+                throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
             }
 
-            return await response.json();
+            const result = await response.json();
+            console.log('Upload successful:', result);
+            return result;
         } catch (error: any) {
+            console.error('Upload error:', error);
             throw new Error(`Upload failed: ${error.message}`);
         }
     }
