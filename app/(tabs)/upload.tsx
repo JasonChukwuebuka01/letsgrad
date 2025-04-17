@@ -61,7 +61,7 @@ export default function UploadScreen() {
   // Function to handle triggering the AI generation (placeholder)
   const handleGeneratePhoto = async () => {
     if (!selectedImageUri) {
-      setError("Please select an image first.");
+      setError("Please select an image first");
       return;
     }
 
