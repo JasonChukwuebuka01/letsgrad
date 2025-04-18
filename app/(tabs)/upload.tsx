@@ -84,7 +84,7 @@ export default function UploadScreen() {
     setIsLoading(true);
 
     if (!base64Image) {
-      Alert.alert('Error', 'Please select an image first.');
+      Alert.alert('Error', 'Please select an imag first.');
       return;
     }
 
