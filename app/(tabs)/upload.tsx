@@ -22,11 +22,8 @@ export default function UploadScreen() {
   const router = useRouter();
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-
 
   // Function to handle selecting a photo
   const handleSelectPhoto = async () => {
@@ -56,10 +53,10 @@ export default function UploadScreen() {
         setSelectedImageUri(result.assets[0].uri);
         console.log('Selected Image URI:', result.assets[0].uri);
 
-        const base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+        const base64Image = await FileSystem.readAsStringAsync(result.assets[0].uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
-        setBase64Image(base64);
+        setBase64Image(base64Image);
       }
     } catch (e) {
       console.error("ImagePicker Error: ", e);
@@ -67,11 +64,6 @@ export default function UploadScreen() {
       Alert.alert("Error", "Could not select image.");
     }
   };
-
-
-
-
-
 
   // Function to handle triggering the AI generation (placeholder)
   const handleGeneratePhoto = async () => {
@@ -83,31 +75,30 @@ export default function UploadScreen() {
     setError(null);
     setIsLoading(true);
 
-    if (!base64Image) {
-      Alert.alert('Error', 'Please select an imag first.');
-      return;
-    }
-
     try {
-      const response = await fetch('http://192.168.43.201:8081/api/transform', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          base64Image,
-          prompt: 'Transform this image into a college graduation photo',
-        }),
-      });
+      // Properly format the transformations
+      const transformationOptions = {
+        prompt: "recolorr",
+        toColor: "#FF00FF" // Specify the target color scheme
+      };
 
-      const data = await response.json();
-      if (data.error) {
-        Alert.alert('Error', data.error);
+      const result = await cloudinaryAIService.generativeRecolor(selectedImageUri, transformationOptions);
+        console.log(result);
+      if (result && result.secure_url) {  // Check for secure_url instead of success
+        router.push({
+          pathname: '/result',
+          params: { url: result.secure_url }  // Use secure_url from the response
+        });
+
+        console.log('Generated Image URL:', result.secure_url);
       } else {
-        setResult(data.result);
-        console.log(data.result);
+        setError('Failed to generate photo. Please try again.');
+        Alert.alert('Error', 'Failed to generate photo. Please try again.');
       }
-    } catch (error) {
-      console.error('API Error:', error);
-      Alert.alert('Error', 'Failed to connect to the API.');
+    } catch (error: any) {
+      console.error('Generation Error:', error);
+      setError(error.message || 'An unexpected error occurred. Please try again');
+      Alert.alert('Error', error.message || 'An unexpected error occurred. Please try again.');
     }
 
     setIsLoading(false);
