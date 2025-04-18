@@ -16,9 +16,10 @@ class CloudinaryAIService {
     private apiSecret: string;
 
     constructor() {
-        this.cloudName = "dcyjr883i";
-        this.apiKey = "692177321334664";
-        this.apiSecret = "wzOLk0-UkPSrVQRPeUX2LmKVl-w";
+        this.cloudName = process.env.CLOUDINARY_CLOUD_NAME 
+        this.apiKey = process.env.CLOUDINARY_API_KEY
+        this.apiSecret = process.env.CLOUDINARY_API_SECRET
+      
 
         if (!this.cloudName || !this.apiKey || !this.apiSecret) {
             throw new Error('Cloudinary configuration is missing required credentials');
@@ -59,7 +60,7 @@ class CloudinaryAIService {
                 body: formData,
                 headers: {
                     'Accept': 'application/json',
-                    'Content-Type': 'multipart/form-data',
+                   // 'Content-Type': 'multipart/form-data',
                 },
             });
 

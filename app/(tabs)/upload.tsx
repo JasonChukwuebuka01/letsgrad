@@ -77,12 +77,16 @@ export default function UploadScreen() {
 
     try {
       // Properly format the transformations
-      const transformationOptions = {
-        prompt: "recolorr",
-        toColor: "#FF00FF" // Specify the target color scheme
-      };
+      const transformationOptions = [
+        { prompt: "a professional graduation photo with formal academic attire, graduation cap and gown, professional lighting, studio background" },
+        { model: "cloudinary_ai" },
+        { quality: "auto" },
+        { format: "auto" },
+        { crop: "fill" },
+        { gravity: "auto" }
+      ];
 
-      const result = await cloudinaryAIService.generativeRecolor(selectedImageUri, transformationOptions);
+      const result = await cloudinaryAIService.applyTransformation(selectedImageUri, transformationOptions);
         console.log(result);
       if (result && result.secure_url) {  // Check for secure_url instead of success
         router.push({
