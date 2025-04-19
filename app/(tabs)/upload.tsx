@@ -59,7 +59,7 @@ export default function UploadScreen() {
         setBase64Image(base64Image);
       }
     } catch (e) {
-      console.error("ImagePicker Error: ", e);
+      console.error("ImagePicker Erro: ", e);
       setError("Could not select image. Please try again.");
       Alert.alert("Error", "Could not select image.");
     }
